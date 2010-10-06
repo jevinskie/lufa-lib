@@ -257,6 +257,7 @@ static void USB_Device_GetDescriptor(void)
 {
 	const void* DescriptorPointer;
 	uint16_t    DescriptorSize;
+	void*		DynamicContext;
 	
 	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
 	uint8_t  DescriptorAddressSpace;
@@ -274,6 +275,9 @@ static void USB_Device_GetDescriptor(void)
 	                                                 &DescriptorPointer
 	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
 	                                                 , &DescriptorAddressSpace
+	#endif
+	#if defined(USE_DYNAMIC_DESCRIPTORS)
+													 , &DynamicContext
 	#endif
 													 )) == NO_DESCRIPTOR)
 	{

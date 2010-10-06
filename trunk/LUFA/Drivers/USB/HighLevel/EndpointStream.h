@@ -62,6 +62,8 @@
 		#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
 			#include "StreamCallbacks.h"
 		#endif
+
+        #include "../../../Protothreads/pt.h"
 		
 	/* Enable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)
@@ -75,9 +77,12 @@
 
 		#if !defined(NO_STREAM_CALLBACKS) || defined(__DOXYGEN__)
 			#define __CALLBACK_PARAM     , StreamCallbackPtr_t Callback
+			#define __USE_CALLBACK_PARAM     , Callback
 		#else
 			#define __CALLBACK_PARAM
+			#define __USE_CALLBACK_PARAM
 		#endif
+
 
 	/* Public Interface - May be used in end-application: */
 		/* Enums: */
@@ -117,6 +122,12 @@
 				                                            *   has resumed.
 				                                            */
 			};
+
+#if defined(USE_DYNAMIC_DESCRIPTORS)
+			typedef uint8_t (*Dynamic_Stream_Generator_t)(void *Context, uint16_t TotalLength,
+							 void **const Buffer, uint16_t *Length, uint8_t *MemoryAddressSpace,
+							 void *DynamicContext, uint8_t *BigEndian);
+#endif			
 
 		/* Function Prototypes: */
 			/** Reads and discards the given number of bytes from the endpoint from the given buffer,
@@ -237,6 +248,13 @@
 			uint8_t Endpoint_Write_PStream_BE(const void* Buffer,
 			                                  uint16_t Length
 			                                  __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+
+#if defined(USE_DYNAMIC_DESCRIPTORS)
+			uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
+												  void *Context,
+												  uint16_t Length
+												  __CALLBACK_PARAM) ATTR_NON_NULL_PTR_ARG(1);
+#endif
 
 			/** Reads the given number of bytes from the endpoint from the given buffer in little endian,
 			 *  discarding fully read packets from the host as needed. The last packet is not automatically

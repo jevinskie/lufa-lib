@@ -199,6 +199,9 @@
 			#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
 			                                    , uint8_t* MemoryAddressSpace
 			#endif
+			#if defined(USE_DYNAMIC_DESCRIPTORS)
+												, void **DynamicContext
+			#endif
 			                                    ) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 	/* Private Interface - For use in library only: */

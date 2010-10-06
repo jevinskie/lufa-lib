@@ -84,6 +84,9 @@
 					MEMSPACE_FLASH    = 0, /**< Indicates the requested descriptor is located in FLASH memory. */
 					MEMSPACE_EEPROM   = 1, /**< Indicates the requested descriptor is located in EEPROM memory. */
 					MEMSPACE_RAM      = 2, /**< Indicates the requested descriptor is located in RAM memory. */
+					#if defined(USE_DYNAMIC_DESCRIPTORS)					
+						MEMSPACE_DYNAMIC  = 3, /**< Indicates the requested descriptor is a dynamic protothread generator. */
+					#endif
 				};
 			#endif
 	

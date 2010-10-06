@@ -34,6 +34,7 @@
 #if defined(USB_CAN_BE_DEVICE)
 
 #include "EndpointStream.h"
+#include "DeviceStandardReq.h"
 
 #if !defined(CONTROL_ONLY_DEVICE)
 uint8_t Endpoint_Discard_Stream(uint16_t Length
@@ -107,6 +108,92 @@ uint8_t Endpoint_Discard_Stream(uint16_t Length
 	
 	return ENDPOINT_RWSTREAM_NoError;
 }
+
+
+#if defined(USE_DYNAMIC_DESCRIPTORS)
+uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
+                                      void *Context,
+									  uint16_t Length
+									  __CALLBACK_PARAM)
+{
+    void *Buffer;
+    uint16_t ReturnedLength;
+    uint8_t MemoryAddressSpace;
+    uint8_t BigEndian;
+    struct pt *pt = Context;
+    void *ReturnedContext;
+    uint8_t Return;
+
+    PT_INIT(pt);
+
+    while (Generator(Context, Length, &Buffer, &ReturnedLength,
+                     &MemoryAddressSpace, &ReturnedContext, &BigEndian) != PT_ENDED)
+    {
+        if (BigEndian)
+        {
+            switch (MemoryAddressSpace)
+            {
+                case MEMSPACE_FLASH:
+                    Return = Endpoint_Write_PStream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+                case MEMSPACE_EEPROM:
+                    Endpoint_Write_EStream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+                case MEMSPACE_RAM:
+                    Endpoint_Write_Stream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (MemoryAddressSpace)
+            {
+                case MEMSPACE_FLASH:
+                    Endpoint_Write_PStream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+                case MEMSPACE_EEPROM:
+                    Endpoint_Write_EStream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+                case MEMSPACE_RAM:
+                    Endpoint_Write_Stream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    if (ENDPOINT_RWSTREAM_NoError != Return)
+                    {
+                        return Return;
+                    }
+                    break;
+            }
+        }
+
+        // WHOAH DUDE!
+        if (MEMSPACE_DYNAMIC == MemoryAddressSpace)
+        {
+            Endpoint_Write_Dynamic_Stream(Buffer, ReturnedContext, ReturnedLength __USE_CALLBACK_PARAM);
+        }
+    }
+
+    return ENDPOINT_RWSTREAM_NoError;
+}
+#endif
 
 #define  TEMPLATE_FUNC_NAME                        Endpoint_Write_Stream_LE
 #define  TEMPLATE_BUFFER_TYPE                      const void*
