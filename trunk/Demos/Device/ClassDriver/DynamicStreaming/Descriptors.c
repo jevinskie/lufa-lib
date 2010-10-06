@@ -36,6 +36,7 @@
  */
 
 #include "Descriptors.h"
+#include "LUFA/Protothreads/pt.h"
 
 /** HID class report descriptor. This is a special descriptor constructed with values from the
  *  USBIF HID class specification to describe the reports and capabilities of the HID device. This
@@ -183,11 +184,38 @@ USB_Descriptor_String_t PROGMEM ProductString =
 	.UnicodeString          = L"LUFA Generic HID Demo"
 };
 
-#define FEEDER_SIZE 1024
+#define FEEDER_SIZE 32
 
-void feeder(void)
+typedef struct
 {
-    return;
+    struct pt pt;
+    int i;
+} feeder_t;
+
+feeder_t feeder_context;
+
+uint8_t feeder(feeder_t *c, uint16_t TotalLength,
+			   void **const Buffer, uint16_t *Length, uint8_t *MemoryAddressSpace,
+		       void *DynamicContext, uint8_t *BigEndian)
+{
+    static uint8_t buf;
+
+    PT_BEGIN(&c->pt);
+
+    *Buffer = &buf;
+    *Length = 1;
+    *MemoryAddressSpace = MEMSPACE_RAM;
+    *BigEndian = 0;
+
+    while (c->i < TotalLength)
+    {
+        buf = c->i;
+        PT_YIELD(&c->pt);
+        c->i++;
+    }
+        
+
+    PT_END(&c->pt);
 }
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
@@ -224,6 +252,9 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			        Size    = sizeof(USB_Descriptor_Configuration_t);
                     break;
                 case 2:
+                    /*Address = feeder;
+                    Size    = FEEDER_SIZE;
+                    Context = &feeder_context;*/
                     Address = &ConfigurationDescriptor;
                     Size    = sizeof(USB_Descriptor_Configuration_t);
                     break;

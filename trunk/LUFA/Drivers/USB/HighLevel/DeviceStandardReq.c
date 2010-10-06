@@ -156,12 +156,18 @@ static void USB_Device_SetConfiguration(void)
 	#else
 		uint8_t MemoryAddressSpace;
 	#endif
+	#if defined(USE_DYNAMIC_DESCRIPTORS)
+		void*	DynamicContext;
+	#endif
 	
 	USB_Descriptor_Device_t* DevDescriptorPtr;
 
 	if (CALLBACK_USB_GetDescriptor((DTYPE_Device << 8), 0, (void*)&DevDescriptorPtr
 	#if !defined(USE_FLASH_DESCRIPTORS) && !defined(USE_EEPROM_DESCRIPTORS) && !defined(USE_RAM_DESCRIPTORS)
 	                               , &MemoryAddressSpace
+	#endif
+	#if defined(USE_DYNAMIC_DESCRIPTORS)
+								   , &DynamicContext
 	#endif
 	                               ) == NO_DESCRIPTOR)
 	{
@@ -178,7 +184,7 @@ static void USB_Device_SetConfiguration(void)
 		if (((uint8_t)USB_ControlRequest.wValue > eeprom_read_byte(&DevDescriptorPtr->NumberOfConfigurations)))
 		  return;
 	}
-	else
+	else if (MemoryAddressSpace == MEMSPACE_RAM)
 	{
 		if ((uint8_t)USB_ControlRequest.wValue > DevDescriptorPtr->NumberOfConfigurations)
 		  return;
@@ -293,14 +299,16 @@ static void USB_Device_GetDescriptor(void)
 	#elif defined(USE_EEPROM_DESCRIPTORS)
 	Endpoint_Write_Control_EStream_LE(DescriptorPointer, DescriptorSize);
 	#elif defined(USE_FLASH_DESCRIPTORS)
-	Endpoint_Write_Control_PStream_LE(DescriptorPointer, DescriptorSize);	
+	Endpoint_Write_Control_PStream_LE(DescriptorPointer, DescriptorSize);
 	#else
 	if (DescriptorAddressSpace == MEMSPACE_FLASH)
 	  Endpoint_Write_Control_PStream_LE(DescriptorPointer, DescriptorSize);	
 	else if (DescriptorAddressSpace == MEMSPACE_EEPROM)
 	  Endpoint_Write_Control_EStream_LE(DescriptorPointer, DescriptorSize);
+	else if (DescriptorAddressSpace == MEMSPACE_RAM)
+	  Endpoint_Write_Control_Stream_LE(DescriptorPointer, DescriptorSize);
 	else
-	  Endpoint_Write_Control_Stream_LE(DescriptorPointer, DescriptorSize);	
+	  Endpoint_Write_Dynamic_Stream(DescriptorPointer, DynamicContext, DescriptorSize, NULL);
 	#endif
 
 	Endpoint_ClearOUT();
