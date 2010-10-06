@@ -111,6 +111,21 @@ uint8_t Endpoint_Discard_Stream(uint16_t Length
 
 
 #if defined(USE_DYNAMIC_DESCRIPTORS)
+
+/* Indexing scheme:
+ * index = (MemoryAddressSpace << 1) | BigEndian)
+ */
+
+Endpoint_Writer_t PROGMEM Dynamic_Dispatch_Table[] =
+{
+    Endpoint_Write_PStream_LE,
+    Endpoint_Write_PStream_BE,
+    Endpoint_Write_EStream_LE,
+    Endpoint_Write_EStream_BE,
+    Endpoint_Write_Stream_LE,
+    Endpoint_Write_Stream_BE,
+};
+
 uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
                                       void *Context,
 									  uint16_t Length
@@ -130,37 +145,6 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
     while (Generator(Context, Length, &Buffer, &ReturnedLength,
                      &MemoryAddressSpace, &ReturnedContext, &BigEndian) != PT_ENDED)
     {
-        if (BigEndian)
-        {
-            switch (MemoryAddressSpace)
-            {
-                case MEMSPACE_FLASH:
-                    Writer = Endpoint_Write_PStream_BE;
-                    break;
-                case MEMSPACE_EEPROM:
-                    Writer = Endpoint_Write_EStream_BE;
-                    break;
-                case MEMSPACE_RAM:
-                    Writer = Endpoint_Write_Stream_BE;
-                    break;
-            }
-        }
-        else
-        {
-            switch (MemoryAddressSpace)
-            {
-                case MEMSPACE_FLASH:
-                    Writer = Endpoint_Write_PStream_LE;
-                    break;
-                case MEMSPACE_EEPROM:
-                    Writer = Endpoint_Write_EStream_LE;
-                    break;
-                case MEMSPACE_RAM:
-                    Writer = Endpoint_Write_Stream_LE;
-                    break;
-            }
-        }
-
         // WHOAH DUDE!
         if (MEMSPACE_DYNAMIC == MemoryAddressSpace)
         {
@@ -168,6 +152,7 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
         }
         else
         {
+            Writer = pgm_read_word(&(Dynamic_Dispatch_Table[(MemoryAddressSpace << 1) | BigEndian]));
             Return = Writer(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
         }
         
