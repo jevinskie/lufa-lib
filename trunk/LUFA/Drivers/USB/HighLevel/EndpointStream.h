@@ -127,7 +127,9 @@
 			typedef uint8_t (*Dynamic_Stream_Generator_t)(void *Context, uint16_t TotalLength,
 							 void **const Buffer, uint16_t *Length, uint8_t *MemoryAddressSpace,
 							 void *DynamicContext, uint8_t *BigEndian);
-#endif			
+#endif
+
+			typedef uint8_t (*Endpoint_Writer_t)(const void* Buffer, uint16_t Length __CALLBACK_PARAM);
 
 		/* Function Prototypes: */
 			/** Reads and discards the given number of bytes from the endpoint from the given buffer,

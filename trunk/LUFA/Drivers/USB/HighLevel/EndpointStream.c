@@ -123,6 +123,7 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
     struct pt *pt = Context;
     void *ReturnedContext;
     uint8_t Return;
+    Endpoint_Writer_t Writer;
 
     PT_INIT(pt);
 
@@ -134,13 +135,13 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
             switch (MemoryAddressSpace)
             {
                 case MEMSPACE_FLASH:
-                    Return = Endpoint_Write_PStream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_PStream_BE;
                     break;
                 case MEMSPACE_EEPROM:
-                    Return = Endpoint_Write_EStream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_EStream_BE;
                     break;
                 case MEMSPACE_RAM:
-                    Return = Endpoint_Write_Stream_BE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_Stream_BE;
                     break;
             }
         }
@@ -149,13 +150,13 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
             switch (MemoryAddressSpace)
             {
                 case MEMSPACE_FLASH:
-                    Return = Endpoint_Write_PStream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_PStream_LE;
                     break;
                 case MEMSPACE_EEPROM:
-                    Return = Endpoint_Write_EStream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_EStream_LE;
                     break;
                 case MEMSPACE_RAM:
-                    Return = Endpoint_Write_Stream_LE(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
+                    Writer = Endpoint_Write_Stream_LE;
                     break;
             }
         }
@@ -164,6 +165,10 @@ uint8_t Endpoint_Write_Dynamic_Stream(Dynamic_Stream_Generator_t Generator,
         if (MEMSPACE_DYNAMIC == MemoryAddressSpace)
         {
             Return = Endpoint_Write_Dynamic_Stream(Buffer, ReturnedContext, ReturnedLength __USE_CALLBACK_PARAM);
+        }
+        else
+        {
+            Return = Writer(Buffer, ReturnedLength __USE_CALLBACK_PARAM);
         }
         
         if (ENDPOINT_RWSTREAM_NoError != Return)
